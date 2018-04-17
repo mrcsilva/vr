@@ -1,0 +1,19 @@
+version: '2'
+services:
+ db:
+   image: mongo:3.0
+   restart: always
+   volumes:
+     - /tmp/mongodb:/data/db
+   networks:
+     - db-tier
+ rocketchat:
+   image: rocket.chat
+   restart: always
+   ports:
+     - '3000:3000'
+   networks:
+     - db-tier
+networks:
+    db-tier:
+      driver: bridge

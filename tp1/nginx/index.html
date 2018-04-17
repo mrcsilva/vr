@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Redirecting</title>
+    </head>
+    <body>
+        <script type="text/javascript">
+        if (location.protocol != 'https:') {
+            location.href = 'http://localhost:8080/auth';
+        }
+        else {
+            location.href = 'https://localhost:8443/auth';
+        }
+        </script>
+    </body>
+</html>

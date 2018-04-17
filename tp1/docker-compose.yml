@@ -1,0 +1,70 @@
+version: '2'
+services:
+  nginx:
+    image: jwilder/nginx-proxy
+    container_name: nginx
+    ports:
+      - 8080:80
+      - 8443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - nginx-vol:/etc/nginx/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  db:
+    image: postgres:8.4
+    container_name: db
+    restart: always
+    environment:
+      POSTGRES_USER: postgresql
+      POSTGRES_PASSWORD: postgresql
+    volumes:
+      - db-vol:/var/lib/postgresql/data
+  smtp:
+    image: namshi/smtp
+    container_name: smtp
+    environment:
+      - SMARTHOST_ADDRESS=vr-g4.gcom.di.uminho.pt
+      - SMARTHOST_ALIASES=*.gcom.di.uminho.pt
+    volumes:
+      - mail-vol:/etc/postfix/main.cf
+  auth:
+    image: php:7.0-apache
+    container_name: auth
+    volumes:
+      - auth-vol:/var/www/html
+  mail:
+    image: php:7.0-apache
+    container_name: mail
+    volumes:
+      - mailservice-vol:/var/www/html
+volumes:
+  db-vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /Users/mario/Desktop/vr/tp1/db
+      o: bind
+  mail-vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /Users/mario/Desktop/vr/tp1/smtp
+      o: bind
+  mailservice-vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /Users/mario/Desktop/vr/tp1/webmail
+      o: bind
+  auth-vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /Users/mario/Desktop/vr/tp1/webauth
+      o: bind
+  nginx-vol:
+    driver: local
+    driver_opts:
+      type: none
+      device: /Users/mario/Desktop/vr/tp1/nginx
+      o: bind

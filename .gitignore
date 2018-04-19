@@ -6,3 +6,21 @@ Debian 9.x*
 .DS_Store
 
 *.zip
+*~
+*.class
+.classpath
+.project
+.settings/
+.pydevproject
+.settings
+.DS_Store
+target
+*.swp
+*.pyc
+findbugs-results
+*.launch
+/thrift
+*.idea/*
+*.iml
+.metadata/
+/bin/

@@ -49,10 +49,13 @@ def myNetwork():
     net.addLink(s1, s2)
 
     info('*** Changing IPs for anycast')
+    h1.setMAC('00:00:00:00:00:01', intf='h1-eth0')
     h2.setIP('10.0.0.250', prefixLen=8, intf='h2-eth1')
     h2.setMAC('00:00:00:00:00:12', intf='h2-eth1')
+    h2.setMAC('00:00:00:00:00:02', intf='h2-eth0')
     h3.setIP('10.0.0.250', prefixLen=8, intf='h3-eth1')
     h3.setMAC('00:00:00:00:00:13', intf='h3-eth1')
+    h3.setMAC('00:00:00:00:00:03', intf='h3-eth0')
 
     info( '*** Starting network\n')
     net.build()

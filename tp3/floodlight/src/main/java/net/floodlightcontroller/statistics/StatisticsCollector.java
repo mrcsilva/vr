@@ -35,7 +35,7 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 	private static IThreadPoolService threadPoolService;
 	private static IRestApiService restApiService;
 
-	private static boolean isEnabled = false;
+	private static boolean isEnabled = true;
 	
 	private static int portStatsInterval = 10; /* could be set by REST API, so not final */
 	private static ScheduledFuture<?> portStatsCollector;
@@ -115,6 +115,10 @@ public class StatisticsCollector implements IFloodlightModule, IStatisticsServic
 									U64.ofRaw((txBytesCounted.getValue() * BITS_PER_BYTE) / timeDifSec), 
 									pse.getRxBytes(), pse.getTxBytes())
 									);
+							
+							long sp = spb.getBitsPerSecondRx().getValue()+spb.getBitsPerSecondTx().getValue();
+							
+							log.info("Switch ID: " + spb.getSwitchId().toString() + "\nBandwidth: " + sp/(1024*1024) + "Mbits/s\nPort: " + spb.getSwitchPort().toString());
 							
 						} else { /* initialize */
 							tentativePortStats.put(npt, SwitchPortBandwidth.of(npt.getNodeId(), npt.getPortId(), U64.ZERO, U64.ZERO, U64.ZERO, pse.getRxBytes(), pse.getTxBytes()));

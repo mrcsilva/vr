@@ -93,101 +93,104 @@ public class PacketTracker implements IOFMessageListener, IFloodlightModule {
  
     @Override
     public Command receive(IOFSwitch sw, OFMessage msg, FloodlightContext cntx) {
-        Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
+    		Ethernet eth = IFloodlightProviderService.bcStore.get(cntx, IFloodlightProviderService.CONTEXT_PI_PAYLOAD);
         
         switch (msg.getType()) {
-        case PACKET_IN:
+        		case PACKET_IN:
      
-            /* Various getters and setters are exposed in Ethernet */
+        			/* Various getters and setters are exposed in Ethernet */
      
-            /* 
-             * Check the ethertype of the Ethernet frame and retrieve the appropriate payload.
-             * Note the shallow equality check. EthType caches and reuses instances for valid types.
-             */
-        		if(sw.getId().toString().equals("00:00:00:00:00:00:00:01")) {
-	            if (eth.getEtherType() == EthType.IPv4) {
-	                /* We got an IPv4 packet; get the payload from Ethernet */
-	                IPv4 ipv4 = (IPv4) eth.getPayload();
+        			/* 
+        			 * Check the ethertype of the Ethernet frame and retrieve the appropriate payload.
+        			 * Note the shallow equality check. EthType caches and reuses instances for valid types.
+        			 */
+        			if(sw.getId().toString().equals("00:00:00:00:00:00:00:01")) {
+        				if (eth.getEtherType() == EthType.IPv4) {
+        					/* We got an IPv4 packet; get the payload from Ethernet */
+        					IPv4 ipv4 = (IPv4) eth.getPayload();
 	                 
-	                /* Various getters and setters are exposed in IPv4 */
-	                IPv4Address dstIp = ipv4.getDestinationAddress();
-	                IPv4Address srcIp = ipv4.getSourceAddress();
-	                 
-	                /* 
-	                 * Check the IP protocol version of the IPv4 packet's payload.
-	                 */
-	                if (ipv4.getProtocol() == IpProtocol.TCP) {
-	                    logger.info("Received packet! Source IP: " + srcIp.toString() + "\nDestination IP: " + dstIp.toString() + "\nProtocol: TCP");
-	                } 
-	                else if (ipv4.getProtocol() == IpProtocol.UDP) {
-	                		logger.info("Received packet! Source IP: " + srcIp.toString() + "\nDestination IP: " + dstIp.toString() + "\nProtocol: UDP");
-	                }
-	                else if(ipv4.getProtocol() == IpProtocol.ICMP) {
-	                		logger.info("Received packet! Source IP: " + srcIp.toString() + "\nDestination IP: " + dstIp.toString() + "\nProtocol: ICMP");
-	                }
-	     
-	            } else if (eth.getEtherType() == EthType.ARP) {
-	                /* We got an ARP packet; get the payload from Ethernet */
-	                ARP arp = (ARP) eth.getPayload();
+        					/* Various getters and setters are exposed in IPv4 */
+        					IPv4Address dstIp = ipv4.getDestinationAddress();
+        					IPv4Address srcIp = ipv4.getSourceAddress();
+        					
+        					/* 
+        					 * Check the IP protocol version of the IPv4 packet's payload.
+        					 */
+        					if (ipv4.getProtocol() == IpProtocol.TCP) {
+        						logger.info("Received packet! Source IP: " + srcIp.toString() + "\nDestination IP: " + dstIp.toString() + "\nProtocol: TCP");
+        					} 
+        					else if (ipv4.getProtocol() == IpProtocol.UDP) {
+        						logger.info("Received packet! Source IP: " + srcIp.toString() + "\nDestination IP: " + dstIp.toString() + "\nProtocol: UDP");
+        					}
+        					else if(ipv4.getProtocol() == IpProtocol.ICMP) {
+        						logger.info("Received packet! Source IP: " + srcIp.toString() + "\nDestination IP: " + dstIp.toString() + "\nProtocol: ICMP");
+        					}
+        				} else if (eth.getEtherType() == EthType.ARP) {
+        					/* We got an ARP packet; get the payload from Ethernet */
+        					ARP arp = (ARP) eth.getPayload();
 	                
-	                MacAddress srcMac = arp.getSenderHardwareAddress();
-	                MacAddress dstMac = arp.getTargetHardwareAddress();
+        					MacAddress srcMac = arp.getSenderHardwareAddress();
+        					MacAddress dstMac = arp.getTargetHardwareAddress();
 	                
-	                logger.info("Received ARP packet! Source MAC: " + srcMac.toString() + " Destination MAC: " + dstMac.toString());
+        					logger.info("Received ARP packet! Source MAC: " + srcMac.toString() + " Destination MAC: " + dstMac.toString());
 	     
-	            } else {
-	                /* Unhandled ethertype */
-	            }
-        		}
-            if (eth.getEtherType() == EthType.ARP) {
-            		ARP arp = (ARP) eth.getPayload();
-            		if(arp.getTargetProtocolAddress().equals(IPv4Address.of("10.0.0.250"))) {
-                    if (last % 2 == 0) {
-                        MacAddress macdst = MacAddress.of("00:00:00:00:00:12");
-                        IPv4Address ipdst = IPv4Address.of("10.0.0.250");
+        				} 
+        				else {
+        					/* Unhandled ethertype */
+        				}
+        			}
+        			if (eth.getEtherType() == EthType.IPv4) {
+        				IPv4 ipv4 = (IPv4) eth.getPayload();
+        				if(ipv4.getDestinationAddress().equals(IPv4Address.of("10.0.0.250"))) {
+        					
+        					logger.info("CHANGING IP ADDRESS!");
+                    
+        					MacAddress macdst = MacAddress.of("00:00:00:00:00:12");
+        					IPv4Address ipDNS1 = IPv4Address.of("10.0.0.20");
+        					IPv4Address ipDNS2 = IPv4Address.of("10.0.0.21");
                         
-                        arp.setTargetHardwareAddress(arp.getSenderHardwareAddress());
-                        arp.setTargetProtocolAddress(arp.getSenderProtocolAddress());
-                        arp.setSenderProtocolAddress(ipdst);
-                        arp.setSenderHardwareAddress(macdst);
+        					if(ipv4.getSourceAddress().equals(IPv4Address.of("10.0.0.1"))) {
+        						if (last % 2 == 0) {
+        							ipv4.setDestinationAddress(ipDNS1);
+        							macdst = MacAddress.of("00:00:00:00:00:01");
+        						}
+        						else {
+                        			ipv4.setDestinationAddress(ipDNS2);
+                        			macdst = MacAddress.of("00:00:00:00:00:02");
+                        		}
+                        		last++;
+        					}
+        					else if(ipv4.getSourceAddress().equals(IPv4Address.of("10.0.0.2"))) {
+        						ipv4.setDestinationAddress(ipDNS1);
+        						macdst = MacAddress.of("00:00:00:00:00:01");
+        					}
+        					
+                        eth.setDestinationMACAddress(macdst);
+                        eth.setPayload(ipv4);
+                    
+                        logger.info("MAC Dest: " + eth.getDestinationMACAddress().toString() + "\nIP Dest: " + ((IPv4)eth.getPayload()).getDestinationAddress().toString());
                         
-                    }
-                    else {
-                        MacAddress macdst = MacAddress.of("00:00:00:00:00:13");
-                        IPv4Address ipdst = IPv4Address.of("10.0.0.250");
-                        
-                        arp.setTargetHardwareAddress(arp.getSenderHardwareAddress());
-                        arp.setTargetProtocolAddress(arp.getSenderProtocolAddress());
-                        arp.setSenderProtocolAddress(ipdst);
-                        arp.setSenderHardwareAddress(macdst);
-                    }
-                    last++;
+        					OFFactory myFactory = sw.getOFFactory();
                     
-                    arp.setOpCode(ArpOpcode.REPLY);
-                    OFPacketOut.Builder pob = sw.getOFFactory().buildPacketOut();
-                    
-                    pob.setData(arp.serialize());
-                    
-                    OFFactory myFactory = sw.getOFFactory();
-                    
-                    /* Specify the switch port(s) which the packet should be sent out. */
-                    OFActionOutput output = myFactory.actions().buildOutput()
-                        .setPort(OFPort.FLOOD)
-                        .build();
+        					/* Specify the switch port(s) which the packet should be sent out. */
+        					OFActionOutput output = myFactory.actions().buildOutput()
+        							.setPort(OFPort.FLOOD)
+        							.build();
+        					
                      
-                    /* 
-                     * Compose the OFPacketOut with the above Ethernet packet as the 
-                     * payload/data, and the specified output port(s) as actions.
-                     */
-                    OFPacketOut myPacketOut = myFactory.buildPacketOut()
-                        .setData(eth.serialize())
-                        .setBufferId(OFBufferId.NO_BUFFER)
-                        .setActions(Collections.singletonList((OFAction) output))
-                        .build();
+        					/* 
+        					 * Compose the OFPacketOut with the above Ethernet packet as the 
+        					 * payload/data, and the specified output port(s) as actions.
+        					 */
+        					OFPacketOut myPacketOut = myFactory.buildPacketOut()
+        							.setData(eth.serialize())
+        							.setBufferId(OFBufferId.NO_BUFFER)
+        							.setActions(Collections.singletonList((OFAction) output))
+        							.build();
                      
-                    /* Write the packet to the switch via an IOFSwitch instance. */
-                    sw.write(myPacketOut);
-                    return Command.STOP;
+        					/* Write the packet to the switch via an IOFSwitch instance. */
+        					sw.write(myPacketOut);
+        					return Command.STOP;
                 }
             }
             break;

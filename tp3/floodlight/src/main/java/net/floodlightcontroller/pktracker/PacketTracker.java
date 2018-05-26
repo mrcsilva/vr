@@ -141,38 +141,40 @@ public class PacketTracker implements IOFMessageListener, IFloodlightModule {
         			}
         			if (eth.getEtherType() == EthType.IPv4) {
         				IPv4 ipv4 = (IPv4) eth.getPayload();
-        				if(ipv4.getDestinationAddress().equals(IPv4Address.of("10.0.0.250")) && ipv4.getProtocol() == IpProtocol.UDP) {
+        				if(ipv4.getDestinationAddress().equals(IPv4Address.of("10.0.0.250")) && eth.getDestinationMACAddress().equals(MacAddress.of("ff:ff:ff:ff:ff:ff"))) {
         					
         					logger.info("CHANGING IP ADDRESS!");
+        					logger.info("Received packet! Dest Mac: " + eth.getDestinationMACAddress().toString());
                     
         					MacAddress macsrc = eth.getSourceMACAddress();
-        					MacAddress macdst = MacAddress.of("00:00:00:00:00:12");
+        					MacAddress macdst = MacAddress.of("00:00:00:00:00:01");
         					IPv4Address ipDNS1 = IPv4Address.of("10.0.0.20");
         					IPv4Address ipDNS2 = IPv4Address.of("10.0.0.21");
                         
         					if(ipv4.getSourceAddress().equals(IPv4Address.of("10.0.0.1"))) {
         						if (last % 2 == 0) {
-        							ipv4.setDestinationAddress(ipDNS1);
+        							//ipv4.setDestinationAddress(ipDNS1);
         							macdst = MacAddress.of("00:00:00:00:00:01");
         						}
         						else {
-                        			ipv4.setDestinationAddress(ipDNS2);
+                        			//ipv4.setDestinationAddress(ipDNS2);
                         			macdst = MacAddress.of("00:00:00:00:00:02");
                         		}
                         		last++;
         					}
         					else if(ipv4.getSourceAddress().equals(IPv4Address.of("10.0.0.2"))) {
-        						ipv4.setDestinationAddress(ipDNS1);
+        						//ipv4.setDestinationAddress(ipDNS1);
         						macdst = MacAddress.of("00:00:00:00:00:01");
         					}
         					
-        				Ethernet newEth = new Ethernet();
-                        newEth.setDestinationMACAddress(macdst);
-                        newEth.setSourceMACAddress(macsrc);
-                        newEth.setPayload(ipv4);
-                        newEth.setEtherType(EthType.IPv4);
-                    
-                        logger.info("MAC Dest: " + newEth.getDestinationMACAddress().toString() + "\nIP Dest: " + ((IPv4)newEth.getPayload()).getDestinationAddress().toString());
+        					
+        					Ethernet newEth = new Ethernet();
+        					newEth.setDestinationMACAddress(macdst);
+        					newEth.setSourceMACAddress(macsrc);
+        					newEth.setPayload(ipv4);
+        					newEth.setEtherType(EthType.IPv4);
+        					logger.info("Switch: " + sw.getId().toString());
+        					logger.info("MAC Dest: " + newEth.getDestinationMACAddress().toString() + "\nIP Dest: " + ((IPv4)newEth.getPayload()).getDestinationAddress().toString());
                         
         					OFFactory myFactory = sw.getOFFactory();
                     

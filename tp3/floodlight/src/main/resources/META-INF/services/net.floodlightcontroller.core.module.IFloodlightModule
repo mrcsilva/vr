@@ -1,3 +1,4 @@
+net.floodlightcontroller.pktracker.PacketTracker
 net.floodlightcontroller.core.internal.FloodlightProvider
 net.floodlightcontroller.storage.memory.MemoryStorageSource
 net.floodlightcontroller.flowcache.FlowReconcileManager
@@ -30,4 +31,3 @@ net.floodlightcontroller.statistics.StatisticsCollector
 net.floodlightcontroller.routing.RoutingManager
 net.floodlightcontroller.cpanalyzer.CPAnalyzer
 net.floodlightcontroller.hasupport.HAController
-net.floodlightcontroller.pktracker.PacketTracker

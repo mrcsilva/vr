@@ -1,5 +1,8 @@
 package net.floodlightcontroller.pktracker;
 
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -153,17 +156,14 @@ public class PacketTracker implements IOFMessageListener, IFloodlightModule {
                         
         					if(ipv4.getSourceAddress().equals(IPv4Address.of("10.0.0.1"))) {
         						if (last % 2 == 0) {
-        							//ipv4.setDestinationAddress(ipDNS1);
         							macdst = MacAddress.of("00:00:00:00:00:01");
         						}
         						else {
-                        			//ipv4.setDestinationAddress(ipDNS2);
                         			macdst = MacAddress.of("00:00:00:00:00:02");
                         		}
                         		last++;
         					}
         					else if(ipv4.getSourceAddress().equals(IPv4Address.of("10.0.0.2"))) {
-        						//ipv4.setDestinationAddress(ipDNS1);
         						macdst = MacAddress.of("00:00:00:00:00:01");
         					}
         					
@@ -198,6 +198,81 @@ public class PacketTracker implements IOFMessageListener, IFloodlightModule {
         					sw.write(myPacketOut);
         					return Command.STOP;
                 }
+        			else if(ipv4.getDestinationAddress().equals(IPv4Address.of("10.0.0.251")) && eth.getDestinationMACAddress().equals(MacAddress.of("ff:ff:ff:ff:ff:ff"))) {
+        				MacAddress macsrc = eth.getSourceMACAddress();
+    					MacAddress macdst = MacAddress.of("00:00:00:00:00:03");
+    					
+    					logger.info("Changed ip!\n");
+                    
+    					try {
+	    					DatagramSocket socket = new DatagramSocket();
+	    					InetAddress fs1 = InetAddress.getByName("10.0.0.22");
+	    			        InetAddress fs2 = InetAddress.getByName("10.0.0.23");
+	    					byte[] incomingData = new byte[1024];
+	    					String type = "Estado";
+	    					byte[] buf = type.getBytes();
+	    					DatagramPacket packet = new DatagramPacket(buf, buf.length, fs1, 9876);
+	    					socket.setSoTimeout(500);
+	    					socket.send(packet);
+	    					logger.info("Enviado primeiro\n");
+	    					packet = new DatagramPacket(buf, buf.length, fs2, 9876);
+	    					socket.send(packet);
+	    					logger.info("Enviado segundo\n");
+	    					
+	    					DatagramPacket incomingPacket = new DatagramPacket(incomingData, incomingData.length);
+	    					socket.receive(incomingPacket);
+	    					logger.info("Recebido primeiro\n");
+	    					String response = new String(incomingPacket.getData());
+	    					String[] splited = response.split("\\s+");
+	    					
+	    					socket.receive(incomingPacket);
+	    					logger.info("Recebido segundo\n");
+	    					response = new String(incomingPacket.getData());
+	    					String[] splited2 = response.split("\\s+");
+	    					
+	    					float val1 = Float.parseFloat(splited[1]);
+	    					float val2 = Float.parseFloat(splited2[1]);
+	    					logger.info("Cargas: " + val1 + " " + val2 + "\n");
+    						if (val1 < val2) {
+    							macdst = MacAddress.of("00:00:00:00:00:03");
+    						}
+    						else {
+                    			macdst = MacAddress.of("00:00:00:00:00:04");
+                    		}
+    						socket.close();
+    					}
+    					catch(Exception e) {
+    						e.printStackTrace();
+    					}
+    					
+    					Ethernet newEth = new Ethernet();
+    					newEth.setDestinationMACAddress(macdst);
+    					newEth.setSourceMACAddress(macsrc);
+    					newEth.setPayload(ipv4);
+    					newEth.setEtherType(EthType.IPv4);
+                    
+    					OFFactory myFactory = sw.getOFFactory();
+                
+    					/* Specify the switch port(s) which the packet should be sent out. */
+    					OFActionOutput output = myFactory.actions().buildOutput()
+    							.setPort(OFPort.FLOOD)
+    							.build();
+    					
+                 
+    					/* 
+    					 * Compose the OFPacketOut with the above Ethernet packet as the 
+    					 * payload/data, and the specified output port(s) as actions.
+    					 */
+    					OFPacketOut myPacketOut = myFactory.buildPacketOut()
+    							.setData(newEth.serialize())
+    							.setBufferId(OFBufferId.NO_BUFFER)
+    							.setActions(Collections.singletonList((OFAction) output))
+    							.build();
+                 
+    					/* Write the packet to the switch via an IOFSwitch instance. */
+    					sw.write(myPacketOut);
+    					return Command.STOP;
+        			}
             }
         		else if(eth.getEtherType() == EthType.ARP) {
         			ARP a = (ARP) eth.getPayload();
@@ -244,6 +319,49 @@ public class PacketTracker implements IOFMessageListener, IFloodlightModule {
                     sw.write(myPacketOut);
                     return Command.STOP;
         			        				
+        			}
+        			else if(a.getTargetProtocolAddress().equals(IPv4Address.of("10.0.0.251"))) {
+        				MacAddress macdst = MacAddress.of("ff:ff:ff:ff:ff:ff");
+                    IPv4Address ipdst = IPv4Address.of("10.0.0.251");
+                            
+                    a.setTargetHardwareAddress(a.getSenderHardwareAddress());
+                    a.setTargetProtocolAddress(a.getSenderProtocolAddress());
+                    a.setSenderProtocolAddress(ipdst);
+                    a.setSenderHardwareAddress(macdst);
+                    
+                    Ethernet newEth = new Ethernet();
+                    
+                    newEth.setDestinationMACAddress(a.getSenderHardwareAddress());
+                    newEth.setSourceMACAddress(macdst);
+                    newEth.setPayload(a);
+                    newEth.setEtherType(EthType.ARP);
+                    
+                        
+                    a.setOpCode(ArpOpcode.REPLY);
+                    OFPacketOut.Builder pob = sw.getOFFactory().buildPacketOut();
+                    
+                    pob.setData(a.serialize());
+                    
+                    OFFactory myFactory = sw.getOFFactory();
+                    
+                    /* Specify the switch port(s) which the packet should be sent out. */
+                    OFActionOutput output = myFactory.actions().buildOutput()
+                        .setPort(OFPort.FLOOD)
+                        .build();
+                     
+                    /* 
+                     * Compose the OFPacketOut with the above Ethernet packet as the 
+                     * payload/data, and the specified output port(s) as actions.
+                     */
+                    OFPacketOut myPacketOut = myFactory.buildPacketOut()
+                        .setData(newEth.serialize())
+                        .setBufferId(OFBufferId.NO_BUFFER)
+                        .setActions(Collections.singletonList((OFAction) output))
+                        .build();
+                         
+                    /* Write the packet to the switch via an IOFSwitch instance. */
+                    sw.write(myPacketOut);
+                    return Command.STOP;
         			}
         		}
             break;
